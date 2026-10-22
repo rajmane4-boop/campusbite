@@ -63,6 +63,12 @@
           "body": "{\n  \"message\": \"Invalid status. Allowed values: Placed, Preparing, Ready, Completed, Cancelled\"\n}"
         },
         {
+          "name": "400 Bad Request — Invalid ID Format",
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"message\": \"Invalid order ID format\"\n}"
+        },
+        {
           "name": "404 Not Found — Order Missing",
           "status": "Not Found",
           "code": 404,
@@ -124,6 +130,12 @@
           "status": "OK",
           "code": 200,
           "body": "{\n  \"message\": \"\\\"Crispy Samosa (2 pcs)\\\" is now UNAVAILABLE\",\n  \"menuItem\": {\n    \"_id\": \"67139a01bce23\",\n    \"name\": \"Crispy Samosa (2 pcs)\",\n    \"isAvailable\": false\n  }\n}"
+        },
+        {
+          "name": "400 Bad Request — Invalid ID Format",
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"message\": \"Invalid menu item ID format\"\n}"
         }
       ]
     },

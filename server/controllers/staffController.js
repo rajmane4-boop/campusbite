@@ -7,6 +7,7 @@
  * @module staffController
  */
 
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
 
@@ -62,13 +63,17 @@ const getKitchenQueue = async (req, res) => {
  * @param {string} req.body.orderStatus  - Target status (must be in VALID_STATUSES).
  * @access Staff Only
  * @returns {object} 200 — { message, order } — updated order document.
- * @returns {object} 400 — Invalid status value supplied.
+ * @returns {object} 400 — Invalid status value or malformed ObjectId.
  * @returns {object} 404 — Order not found.
  * @returns {object} 500 — Internal server error.
  */
 const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { orderStatus } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid order ID format' });
+  }
 
   if (!orderStatus || !VALID_STATUSES.includes(orderStatus)) {
     return res.status(400).json({
@@ -108,11 +113,16 @@ const updateOrderStatus = async (req, res) => {
  * @param {string} req.params.id - MongoDB ObjectId of the MenuItem.
  * @access Staff Only
  * @returns {object} 200 — { message, menuItem } — updated menu item.
+ * @returns {object} 400 — Malformed menu item ID format.
  * @returns {object} 404 — Menu item not found.
  * @returns {object} 500 — Internal server error.
  */
 const toggleMenuItemStock = async (req, res) => {
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid menu item ID format' });
+  }
 
   try {
     const item = await MenuItem.findById(id);
