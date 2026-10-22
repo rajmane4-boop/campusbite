@@ -8,6 +8,7 @@ dotenv.config();
 const User = require('../models/User');
 const MenuItem = require('../models/MenuItem');
 const TimeSlot = require('../models/TimeSlot');
+const Order = require('../models/Order');
 
 const seedData = async () => {
   try {
@@ -19,7 +20,8 @@ const seedData = async () => {
     await User.deleteMany({});
     await MenuItem.deleteMany({});
     await TimeSlot.deleteMany({});
-    console.log('Cleared existing Users, MenuItems, and TimeSlots.');
+    await Order.deleteMany({});
+    console.log('Cleared existing Users, MenuItems, TimeSlots, and Orders.');
 
     // 1. Create Test Users
     const salt = await bcrypt.genSalt(10);
@@ -210,6 +212,110 @@ const seedData = async () => {
       { slotLabel: '01:15 PM - 01:30 PM', maxCapacity: 20, bookedCount: 2, isActive: true },
     ]);
     console.log(`Seeded ${timeSlots.length} default pickup time slots.`);
+
+    // 4. Create 3 Sample Active Orders for Kitchen Queue Testing
+    const studentUser = users[0]; // Riya Sharma
+    const sampleOrders = await Order.insertMany([
+      {
+        studentId: studentUser._id,
+        studentName: studentUser.name,
+        rollNumber: studentUser.rollNumber,
+        items: [
+          {
+            menuItemId: menuItems[0]._id,
+            name: menuItems[0].name,
+            quantity: 2,
+            price: menuItems[0].price,
+            isVeg: menuItems[0].isVeg,
+          },
+          {
+            menuItemId: menuItems[8]._id,
+            name: menuItems[8].name,
+            quantity: 1,
+            price: menuItems[8].price,
+            isVeg: menuItems[8].isVeg,
+          },
+        ],
+        subtotal: 120,
+        taxAmount: 6,
+        packagingFee: 10,
+        totalAmount: 136,
+        timeSlotId: timeSlots[2]._id,
+        slotLabel: timeSlots[2].slotLabel,
+        pickupToken: 'CB-101',
+        paymentMethod: 'upi',
+        paymentStatus: 'Completed',
+        orderStatus: 'Placed',
+        statusTimestamps: {
+          placedAt: new Date(),
+        },
+      },
+      {
+        studentId: studentUser._id,
+        studentName: studentUser.name,
+        rollNumber: studentUser.rollNumber,
+        items: [
+          {
+            menuItemId: menuItems[4]._id,
+            name: menuItems[4].name,
+            quantity: 1,
+            price: menuItems[4].price,
+            isVeg: menuItems[4].isVeg,
+          },
+        ],
+        subtotal: 110,
+        taxAmount: 6,
+        packagingFee: 10,
+        totalAmount: 126,
+        timeSlotId: timeSlots[3]._id,
+        slotLabel: timeSlots[3].slotLabel,
+        pickupToken: 'CB-102',
+        paymentMethod: 'upi',
+        paymentStatus: 'Completed',
+        orderStatus: 'Preparing',
+        statusTimestamps: {
+          placedAt: new Date(Date.now() - 15 * 60 * 1000),
+          preparingAt: new Date(Date.now() - 5 * 60 * 1000),
+        },
+      },
+      {
+        studentId: studentUser._id,
+        studentName: studentUser.name,
+        rollNumber: studentUser.rollNumber,
+        items: [
+          {
+            menuItemId: menuItems[1]._id,
+            name: menuItems[1].name,
+            quantity: 1,
+            price: menuItems[1].price,
+            isVeg: menuItems[1].isVeg,
+          },
+          {
+            menuItemId: menuItems[7]._id,
+            name: menuItems[7].name,
+            quantity: 2,
+            price: menuItems[7].price,
+            isVeg: menuItems[7].isVeg,
+          },
+        ],
+        subtotal: 90,
+        taxAmount: 5,
+        packagingFee: 10,
+        totalAmount: 105,
+        timeSlotId: timeSlots[1]._id,
+        slotLabel: timeSlots[1].slotLabel,
+        pickupToken: 'CB-103',
+        paymentMethod: 'wallet',
+        paymentStatus: 'Completed',
+        orderStatus: 'Ready',
+        statusTimestamps: {
+          placedAt: new Date(Date.now() - 25 * 60 * 1000),
+          preparingAt: new Date(Date.now() - 12 * 60 * 1000),
+          readyAt: new Date(Date.now() - 2 * 60 * 1000),
+        },
+      },
+    ]);
+    console.log(`Seeded ${sampleOrders.length} active demo orders (Placed, Preparing, Ready) for Kitchen Queue.`);
 
     console.log('--- SEEDING COMPLETED SUCCESSFULLY ---');
     process.exit(0);

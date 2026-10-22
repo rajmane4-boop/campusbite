@@ -1,8 +1,9 @@
-// [Pushkar] MenuPage.jsx - Category tabs, Veg/Non-Veg toggle, search & responsive catalog
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Sparkles, Utensils, RefreshCw } from 'lucide-react';
 import FoodCard from '../components/FoodCard';
 import axiosInstance from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 // Fallback initial items for offline/standalone preview
 const DEFAULT_MENU_FALLBACK = [
@@ -111,6 +112,16 @@ const DEFAULT_MENU_FALLBACK = [
 const categories = ['All', 'Snacks', 'Meals', 'Beverages'];
 
 const MenuPage = () => {
+  const { isStaff } = useAuth();
+  const navigate = useNavigate();
+
+  // Staff members should only manage the kitchen and stock, not place orders
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/staff-dashboard', { replace: true });
+    }
+  }, [isStaff, navigate]);
+
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');

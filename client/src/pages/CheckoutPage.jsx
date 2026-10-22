@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
 
 // Fallback pickup slots matching backend seed data
@@ -39,6 +40,14 @@ const FALLBACK_SLOTS = [
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { isStaff } = useAuth();
+
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/staff-dashboard', { replace: true });
+    }
+  }, [isStaff, navigate]);
+
   const {
     cartItems,
     cartTotal,

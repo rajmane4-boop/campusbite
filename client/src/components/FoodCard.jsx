@@ -2,8 +2,10 @@
 import React from 'react';
 import { Plus, Minus, Clock, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const FoodCard = ({ item }) => {
+  const { isStaff } = useAuth();
   const { cartItems, addToCart, updateQuantity } = useCart();
   const cartItem = cartItems.find((i) => i._id === item._id);
   const quantity = cartItem ? cartItem.quantity : 0;
@@ -78,7 +80,11 @@ const FoodCard = ({ item }) => {
         </div>
 
         <div>
-          {!item.isAvailable ? (
+          {isStaff ? (
+            <span className="px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-bold rounded-lg border border-orange-200">
+              Staff View
+            </span>
+          ) : !item.isAvailable ? (
             <button
               disabled
               className="px-3.5 py-1.5 bg-gray-100 text-gray-400 text-xs font-medium rounded-lg cursor-not-allowed"

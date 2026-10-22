@@ -45,14 +45,14 @@ const getPasswordStrength = (password) => {
 const LoginRegister = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, register, isAuthenticated } = useAuth();
+  const { login, register, isAuthenticated, isStaff } = useAuth();
 
   // Redirect if already logged in
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/menu', { replace: true });
+      navigate(isStaff ? '/staff-dashboard' : '/menu', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isStaff, navigate]);
 
   // Tab state: 'login' or 'register'
   const [activeTab, setActiveTab] = useState('login');

@@ -103,14 +103,16 @@ const OrderCard = ({ order, onStatusChange, loading }) => {
         <div className="flex items-start justify-between mb-3">
           <div>
             <p className="font-bold text-gray-900 text-sm">
-              {order.studentId?.name || 'Student'}
+              {order.studentName || order.studentId?.name || 'Student'}
             </p>
-            <p className="text-xs text-gray-400">{order.studentId?.rollNumber || ''}</p>
+            <p className="text-xs text-gray-400">
+              {order.rollNumber || order.studentId?.rollNumber || ''}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">Slot</p>
             <p className="text-xs font-semibold text-gray-700">
-              {order.timeSlotId?.slotLabel || '—'}
+              {order.slotLabel || order.timeSlotId?.slotLabel || '—'}
             </p>
           </div>
         </div>
