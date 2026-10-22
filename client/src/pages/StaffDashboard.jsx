@@ -18,6 +18,7 @@ import {
   Package,
   ToggleLeft,
   ToggleRight,
+  Search,
 } from 'lucide-react';
 
 // ─── Status config: colour + label for each order state ────────────────────
@@ -155,6 +156,9 @@ const StaffDashboard = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' | 'stock' | 'analytics'
   const [queueFilter, setQueueFilter] = useState('ALL'); // 'ALL' | 'Placed' | 'Preparing' | 'Ready'
+  const [stockSearch, setStockSearch] = useState('');
+  const [stockCategoryFilter, setStockCategoryFilter] = useState('ALL');
+  const [stockStatusFilter, setStockStatusFilter] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'OUT_OF_STOCK'
   const [queueLoading, setQueueLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [menuLoading, setMenuLoading] = useState(false);
@@ -472,69 +476,184 @@ const StaffDashboard = () => {
               </div>
             ) : (
               (() => {
-                // Group items by category
-                const categories = [...new Set(menuItems.map((i) => i.category))];
+                const inStockCount = menuItems.filter((i) => i.isAvailable).length;
+                const outOfStockCount = menuItems.length - inStockCount;
+                const allCategories = ['ALL', ...new Set(menuItems.map((i) => i.category))];
+
+                const filteredItems = menuItems.filter((item) => {
+                  const matchesSearch = item.name.toLowerCase().includes(stockSearch.toLowerCase());
+                  const matchesCategory = stockCategoryFilter === 'ALL' || item.category === stockCategoryFilter;
+                  const matchesStatus =
+                    stockStatusFilter === 'ALL' ||
+                    (stockStatusFilter === 'IN_STOCK' && item.isAvailable) ||
+                    (stockStatusFilter === 'OUT_OF_STOCK' && !item.isAvailable);
+                  return matchesSearch && matchesCategory && matchesStatus;
+                });
+
+                const displayedCategories = [...new Set(filteredItems.map((i) => i.category))];
+
                 return (
                   <div className="space-y-6">
-                    {categories.map((cat) => (
-                      <div key={cat} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        {/* Category header */}
-                        <div className="px-5 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-gray-100">
-                          <h2 className="text-sm font-bold text-orange-700 uppercase tracking-wide">{cat}</h2>
+                    {/* Stock Overview Stats & Filters */}
+                    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                      {/* Metric summary counters */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <button
+                          onClick={() => setStockStatusFilter('ALL')}
+                          className={`p-3 rounded-xl border text-left transition ${
+                            stockStatusFilter === 'ALL'
+                              ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <p className="text-xs uppercase tracking-wider font-semibold">Total Menu</p>
+                          <p className="text-xl font-black">{menuItems.length}</p>
+                        </button>
+                        <button
+                          onClick={() => setStockStatusFilter(stockStatusFilter === 'IN_STOCK' ? 'ALL' : 'IN_STOCK')}
+                          className={`p-3 rounded-xl border text-left transition ${
+                            stockStatusFilter === 'IN_STOCK'
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                              : 'bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/60'
+                          }`}
+                        >
+                          <p className="text-xs uppercase tracking-wider font-semibold">In Stock</p>
+                          <p className="text-xl font-black">{inStockCount}</p>
+                        </button>
+                        <button
+                          onClick={() => setStockStatusFilter(stockStatusFilter === 'OUT_OF_STOCK' ? 'ALL' : 'OUT_OF_STOCK')}
+                          className={`p-3 rounded-xl border text-left transition ${
+                            stockStatusFilter === 'OUT_OF_STOCK'
+                              ? 'bg-red-600 border-red-600 text-white shadow-sm'
+                              : 'bg-red-50/70 border-red-200 text-red-800 hover:bg-red-100/60'
+                          }`}
+                        >
+                          <p className="text-xs uppercase tracking-wider font-semibold">Sold Out</p>
+                          <p className="text-xl font-black">{outOfStockCount}</p>
+                        </button>
+                      </div>
+
+                      {/* Search Bar + Category Pills */}
+                      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-1">
+                        <div className="relative flex-1">
+                          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={stockSearch}
+                            onChange={(e) => setStockSearch(e.target.value)}
+                            placeholder="Search dishes or drinks..."
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:bg-white transition"
+                          />
+                          {stockSearch && (
+                            <button
+                              onClick={() => setStockSearch('')}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
-                        {/* Items list */}
-                        <ul className="divide-y divide-gray-50">
-                          {menuItems
-                            .filter((item) => item.category === cat)
-                            .map((item) => (
-                              <li
-                                key={item._id}
-                                className={`flex items-center justify-between px-5 py-3 transition-colors ${
-                                  !item.isAvailable ? 'bg-gray-50/70' : ''
-                                }`}
-                              >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  {/* Veg / non-veg dot */}
-                                  <span
-                                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                                      item.isVeg ? 'bg-emerald-500' : 'bg-red-500'
-                                    }`}
-                                  />
-                                  <div className="min-w-0">
-                                    <p
-                                      className={`text-sm font-semibold truncate ${
-                                        item.isAvailable ? 'text-gray-900' : 'text-gray-400 line-through'
-                                      }`}
-                                    >
-                                      {item.name}
-                                    </p>
-                                    <p className="text-xs text-gray-400">₹{item.price}</p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleToggleStock(item._id)}
-                                  disabled={togglingId === item._id}
-                                  title={item.isAvailable ? 'Mark as Sold Out' : 'Mark as Available'}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                    item.isAvailable
-                                      ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                      : 'bg-red-50 text-red-600 hover:bg-red-100'
+
+                        {/* Category selection chips */}
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                          {allCategories.map((cat) => (
+                            <button
+                              key={cat}
+                              onClick={() => setStockCategoryFilter(cat)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                                stockCategoryFilter === cat
+                                  ? 'bg-orange-500 text-white shadow-sm'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Filtered items or empty state */}
+                    {filteredItems.length === 0 ? (
+                      <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center space-y-3">
+                        <Package className="w-10 h-10 text-gray-300 mx-auto" />
+                        <p className="font-semibold text-gray-700">No items match your criteria</p>
+                        <p className="text-xs text-gray-400">Try adjusting your search query or category filters.</p>
+                        <button
+                          onClick={() => {
+                            setStockSearch('');
+                            setStockCategoryFilter('ALL');
+                            setStockStatusFilter('ALL');
+                          }}
+                          className="text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg transition inline-block"
+                        >
+                          Reset Filters
+                        </button>
+                      </div>
+                    ) : (
+                      displayedCategories.map((cat) => (
+                        <div key={cat} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                          {/* Category header */}
+                          <div className="px-5 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-gray-100 flex items-center justify-between">
+                            <h2 className="text-sm font-bold text-orange-700 uppercase tracking-wide">{cat}</h2>
+                            <span className="text-xs font-semibold text-orange-600/80 bg-white/60 px-2 py-0.5 rounded-md">
+                              {filteredItems.filter((i) => i.category === cat).length} items
+                            </span>
+                          </div>
+                          {/* Items list */}
+                          <ul className="divide-y divide-gray-50">
+                            {filteredItems
+                              .filter((item) => item.category === cat)
+                              .map((item) => (
+                                <li
+                                  key={item._id}
+                                  className={`flex items-center justify-between px-5 py-3 transition-colors ${
+                                    !item.isAvailable ? 'bg-gray-50/70' : ''
                                   }`}
                                 >
-                                  {togglingId === item._id ? (
-                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                  ) : item.isAvailable ? (
-                                    <ToggleRight className="w-4 h-4" />
-                                  ) : (
-                                    <ToggleLeft className="w-4 h-4" />
-                                  )}
-                                  {item.isAvailable ? 'In Stock' : 'Sold Out'}
-                                </button>
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    ))}
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    {/* Veg / non-veg dot */}
+                                    <span
+                                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                                        item.isVeg ? 'bg-emerald-500' : 'bg-red-500'
+                                      }`}
+                                    />
+                                    <div className="min-w-0">
+                                      <p
+                                        className={`text-sm font-semibold truncate ${
+                                          item.isAvailable ? 'text-gray-900' : 'text-gray-400 line-through'
+                                        }`}
+                                      >
+                                        {item.name}
+                                      </p>
+                                      <p className="text-xs text-gray-400">₹{item.price}</p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleToggleStock(item._id)}
+                                    disabled={togglingId === item._id}
+                                    title={item.isAvailable ? 'Mark as Sold Out' : 'Mark as Available'}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                      item.isAvailable
+                                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                        : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                    }`}
+                                  >
+                                    {togglingId === item._id ? (
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : item.isAvailable ? (
+                                      <ToggleRight className="w-4 h-4" />
+                                    ) : (
+                                      <ToggleLeft className="w-4 h-4" />
+                                    )}
+                                    {item.isAvailable ? 'In Stock' : 'Sold Out'}
+                                  </button>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      ))
+                    )}
                   </div>
                 );
               })()
